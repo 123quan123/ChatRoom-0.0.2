@@ -2,7 +2,6 @@ package com.me.view;
 
 import com.me.CSFramework.core.Client;
 import com.me.CSFramework.core.ClientActionAdapter;
-import com.me.encrpt.AESUtil;
 import com.me.encrpt.RSAUtil;
 import com.me.model.UserModel;
 import com.me.util.*;
@@ -183,7 +182,7 @@ public class RegistryView implements IView {
                           argumentMaker.addArg("com/me/model", cloneModel);
                           String message = argumentMaker.toJson();
                           System.out.println();
-                          String puEncrypt = RSAUtil.puEncrypt(message, model.getServerPuk());
+                          String puEncrypt = loginView.getEncryptUtil().puEncrypt(message, model.getServerPuk());
                           client.registry(puEncrypt);
 
                       } catch (Exception e1) {
