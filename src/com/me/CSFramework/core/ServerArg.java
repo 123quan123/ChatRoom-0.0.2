@@ -1,11 +1,10 @@
 package com.me.CSFramework.core;
 
-import com.me.util.AESUtil;
+import com.me.encrpt.EncryptUtil;
+import com.me.encrpt.IEncryptUtil;
 import com.me.util.PropertiesParse;
-import com.me.util.RSAUtil;
 
 import java.io.InputStream;
-import java.security.NoSuchAlgorithmException;
 
 /**
  * @author quan
@@ -19,28 +18,16 @@ public class ServerArg {
     private final int serverId = 10000;
     private final String serverName = "SERVER";
 
-    private String privateKey;
-    private String publicKey;
-    private String aesKey;
     private int port = DEFAULT_PORT;
     private int maxClientCount = MAX_CLIENT_COUNT;
     private int startRegistryId;
 
-    public String getPrivateKey() {
-        return privateKey;
+    private IEncryptUtil encryptUtil;
+
+    public ServerArg() {
+        encryptUtil = new EncryptUtil();
     }
 
-    public void setPrivateKey(String privateKey) {
-        this.privateKey = privateKey;
-    }
-
-    public String getPublicKey() {
-        return publicKey;
-    }
-
-    public void setPublicKey(String publicKey) {
-        this.publicKey = publicKey;
-    }
 
     private void readCfg(String cfgPath) {
         InputStream is = Server.class.getResourceAsStream(cfgPath);
@@ -61,29 +48,6 @@ public class ServerArg {
         str = PropertiesParse.value("startRegistryId");
         if (str.length() > 0) {
             this.startRegistryId = Integer.valueOf(str.toString());
-        }
-        try {
-            RSAUtil.getKeyPair();
-        } catch (NoSuchAlgorithmException e) {
-            e.printStackTrace();
-        }
-        str = RSAUtil.getprivateKey();
-        if (str.length() > 0) {
-            this.privateKey = str;
-        }
-
-        str = RSAUtil.getPublicKey();
-        if (str.length() > 0) {
-            this.publicKey = str;
-        }
-
-        try {
-            str = AESUtil.getKey();
-        } catch (NoSuchAlgorithmException e) {
-            e.printStackTrace();
-        }
-        if (str.length() > 0) {
-            this.aesKey = str;
         }
     }
 
@@ -115,13 +79,12 @@ public class ServerArg {
         readCfg(configFilePath);
     }
 
-
-    public String getAesKey() {
-        return aesKey;
+    public IEncryptUtil getEncryptUtil() {
+        return encryptUtil;
     }
 
-    public void setAesKey(String aesKey) {
-        this.aesKey = aesKey;
+    public void setEncryptUtil(IEncryptUtil encryptUtil) {
+        this.encryptUtil = encryptUtil;
     }
 
     @Override
@@ -129,9 +92,6 @@ public class ServerArg {
         return "ServerArg{" +
                 "serverId=" + serverId +
                 ", serverName='" + serverName + '\'' +
-                ", privateKey='" + privateKey + '\'' +
-                ", publicKey='" + publicKey + '\'' +
-                ", aesKey='" + aesKey + '\'' +
                 ", port=" + port +
                 ", maxClientCount=" + maxClientCount +
                 ", startRegistryId=" + startRegistryId +

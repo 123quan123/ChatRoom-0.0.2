@@ -1,9 +1,8 @@
 package com.me.CSFramework.core;
 
+import com.me.encrpt.IEncryptUtil;
 import com.me.model.UserModel;
-import com.me.util.AESUtil;
 import com.me.util.ArgumentMaker;
-import com.me.util.RSAUtil;
 
 import java.net.Socket;
 
@@ -12,9 +11,11 @@ public class ServerConversation extends ServerCommunication {
 	private String ip;
 	
 	private Server server;
+	private IEncryptUtil encryptUtil;
 		
-	ServerConversation(Socket socket) {
+	ServerConversation(Socket socket, IEncryptUtil encryptUtil) {
 		super(socket);
+		this.encryptUtil = encryptUtil;
 		ip = socket.getInetAddress().getHostAddress();
 	}
 	
@@ -102,7 +103,7 @@ public class ServerConversation extends ServerCommunication {
 	
 	public void dealToOther(NetMessage message) {
 		try {
-			String decrypt = AESUtil.decrypt(message.getPara(), server.getUserAesKey(message.getAction()));
+			String decrypt = encryptUtil.symmetricDecrypt(message.getPara(), server.getUserAesKey(message.getAction()));
 			server.toOther(message.getAction(), decrypt);
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -112,8 +113,8 @@ public class ServerConversation extends ServerCommunication {
 	public void dealToOne(NetMessage message) {
 		String[] ids = message.getAction().split("@");
 		try {
-			String decrypt = AESUtil.decrypt(message.getPara(), server.getUserAesKey(ids[0]));
-			String encrypt = AESUtil.encrypt(decrypt, server.getUserAesKey(ids[1]));
+			String decrypt = encryptUtil.symmetricDecrypt(message.getPara(), server.getUserAesKey(ids[0]));
+			String encrypt = encryptUtil.symmetricEncrypt(decrypt, server.getUserAesKey(ids[1]));
 			server.toOne(ids[0], ids[1], encrypt);
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -122,20 +123,24 @@ public class ServerConversation extends ServerCommunication {
 
 	public void dealLoginIn(NetMessage message) {
 		try {
-			String prDecrypt = RSAUtil.prDecrypt(message.getPara(), server.getServerArg().getPrivateKey());
+			String privateKey = encryptUtil.getPrivateKey();
+			System.out.println("serverPrk : == :" + privateKey);
+			String prDecrypt = encryptUtil.prDecrypt(message.getPara(), privateKey);
 			ArgumentMaker argumentMaker = new ArgumentMaker(prDecrypt);
 			UserModel reModel = argumentMaker.getValue("com/me/model", UserModel.class);
 			UserModel model = server.loginIn(reModel);
 			System.out.println("login model" + model);
 			if (model != null) {
+				ArgumentMaker argumentMaker1 = new ArgumentMaker();
+				String toJson = argumentMaker1.addArg("com/me/model", model).toJson();
+				System.out.println("tojson : " + toJson);
 				send(new NetMessage()
 						.setCommand(ENetCommand.LOGIN_IN_SUCCESS)
-						.setPara(AESUtil.encrypt(argumentMaker
-						.addArg("com/me/model", model).toJson(), model.getAesKey())));
+						.setPara(encryptUtil.symmetricEncrypt(toJson, reModel.getAesKey())));
 				System.out.println("send over");
 				server.getConversationList().put(model.getId(), this);
 				this.id = model.getId();
-				server.getAesKeyMap().put(id, model.getAesKey());
+				server.getAesKeyMap().put(id, reModel.getAesKey());
 				server.pushOneToOnlineMap(model.getId(), model.getName());
 			} else {
 				System.out.println("111");
@@ -149,7 +154,8 @@ public class ServerConversation extends ServerCommunication {
 	
 	public void dealRegistry(NetMessage message) {
 		try {
-			String prDecrypt = RSAUtil.prDecrypt(message.getPara(), server.getServerArg().getPrivateKey());
+			String privateKey = encryptUtil.getPrivateKey();
+			String prDecrypt = encryptUtil.prDecrypt(message.getPara(), privateKey);
 			ArgumentMaker argumentMaker = new ArgumentMaker(prDecrypt);
 			UserModel model = argumentMaker.getValue("com/me/model", UserModel.class);
 			System.out.println(model);
@@ -177,8 +183,8 @@ public class ServerConversation extends ServerCommunication {
 	public void dealSendPicInfo(NetMessage message) {
 		try {
 			String[] ids = message.getAction().split("@");
-			String decrypt = AESUtil.decrypt(message.getPara(), server.getUserAesKey(ids[0]));
-			String encrypt = AESUtil.encrypt(decrypt, server.getUserAesKey(ids[1]));
+			String decrypt = encryptUtil.symmetricDecrypt(message.getPara(), server.getUserAesKey(ids[0]));
+			String encrypt = encryptUtil.symmetricEncrypt(decrypt, server.getUserAesKey(ids[1]));
 			server.sendPicInfo(ids[0], ids[1], encrypt);
 		} catch (Exception e) {
 			e.printStackTrace();

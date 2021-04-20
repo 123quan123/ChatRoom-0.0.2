@@ -2,6 +2,8 @@ package com.me.view;
 
 import com.me.CSFramework.core.Client;
 import com.me.CSFramework.core.ClientActionAdapter;
+import com.me.encrpt.AESUtil;
+import com.me.encrpt.RSAUtil;
 import com.me.model.UserModel;
 import com.me.util.*;
 
@@ -170,7 +172,7 @@ public class RegistryView implements IView {
 
                       System.out.println(model);
                       try {
-                          String key = AESUtil.getKey();
+                          String key = loginView.getEncryptUtil().getSymmetricKey();
                           ViewTool.showMessage(jfrmRegistry, "重要！！！", "请记录key \n\t" + key);
                           model.setAesKey(key);
 

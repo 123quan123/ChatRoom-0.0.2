@@ -4,6 +4,7 @@ import com.google.gson.Gson;
 import com.me.CSFramework.core.Client;
 import com.me.CSFramework.core.ClientActionAdapter;
 import com.me.CSFramework.core.INetLisener;
+import com.me.encrpt.IEncryptUtil;
 import com.me.model.UserModel;
 import com.me.section.*;
 import com.me.util.*;
@@ -41,6 +42,8 @@ public class ChatView<E> implements IView, INetLisener {
 	private JLabel nickLab ;  //显示昵称的标签
 	
 	private UserModel userModel;
+	private IEncryptUtil encryptUtil;
+
 	private Gson gson = ArgumentMaker.gson;
 	private JScrollPane jspUser;
 	private JList<UserModel> jList;
@@ -48,10 +51,11 @@ public class ChatView<E> implements IView, INetLisener {
 	byte[] imgStr = null;
 	float time = 0.0f;
 
-	public ChatView(Client client) {
+	public ChatView(Client client, IEncryptUtil encryptUtil) {
 		this.client = client;
 		userMap = new HashMap<String, String>();
 		this.userModel = client.getUserModel();
+		this.encryptUtil = encryptUtil;
 		client.setListener(this);
 		initView();
 	}
@@ -113,7 +117,7 @@ public class ChatView<E> implements IView, INetLisener {
 					String[] charArray = msg.split("@");
 					String targetId = charArray[0];
 					long start = TimeDate.getNowTime();
-					String encrypt = AESUtil.encrypt(charArray[1], client.getUserModel().getAesKey());
+					String encrypt = encryptUtil.symmetricEncrypt(charArray[1], client.getUserModel().getAesKey());
 					long end = TimeDate.getNowTime();
 					float exc = TimeDate.getExc(start, end);
 					System.out.println("encrypt time :" + exc);
@@ -146,7 +150,7 @@ public class ChatView<E> implements IView, INetLisener {
 				try {
 					String msg = jtf.getText();
 					long start = TimeDate.getNowTime();
-					String encrypt = AESUtil.encrypt(msg, client.getUserModel().getAesKey());
+					String encrypt = encryptUtil.symmetricEncrypt(msg, client.getUserModel().getAesKey());
 					long end = TimeDate.getNowTime();
 					float exc = TimeDate.getExc(start, end);
 					client.toOther(userModel.getId(), encrypt);
@@ -292,7 +296,7 @@ public class ChatView<E> implements IView, INetLisener {
 				long start = TimeDate.getNowTime();
 				System.out.println("to one end : " + start);
 
-				String decrypt = AESUtil.decrypt(message, client.getUserModel().getAesKey());
+				String decrypt = encryptUtil.symmetricDecrypt(message, client.getUserModel().getAesKey());
 
 				long end = TimeDate.getNowTime();
 				float exc = TimeDate.getExc(start, end);
@@ -310,7 +314,7 @@ public class ChatView<E> implements IView, INetLisener {
 				long start = TimeDate.getNowTime();
 				System.out.println("to other end : " + start);
 
-				String decrypt = AESUtil.decrypt(message, client.getUserModel().getAesKey());
+				String decrypt = encryptUtil.symmetricDecrypt(message, client.getUserModel().getAesKey());
 				long end = TimeDate.getNowTime();
 				float exc = TimeDate.getExc(start, end);
 				System.out.println("decrypt time :" + exc);
@@ -345,7 +349,7 @@ public class ChatView<E> implements IView, INetLisener {
 				FileSection fileSection = new FileSection((long) imgStr.length);
 				fileSection.setValue(imgStr);
 				start = TimeDate.getNowTime();
-				String decrypt = AESUtil.encrypt(gson.toJson(fileSection), userModel.getAesKey());
+				String decrypt = encryptUtil.symmetricEncrypt(gson.toJson(fileSection), userModel.getAesKey());
 				client.sendPicInfo(userModel.getId(), targetId, decrypt);
 			} catch (Exception e1) {
 				e1.printStackTrace();
@@ -363,7 +367,7 @@ public class ChatView<E> implements IView, INetLisener {
 			try {
 				long start = TimeDate.getNowTime();
 
-				String decrypt = AESUtil.decrypt(picSectionInfo, client.getUserModel().getAesKey());
+				String decrypt = encryptUtil.symmetricDecrypt(picSectionInfo, client.getUserModel().getAesKey());
 
 				long end = TimeDate.getNowTime();
 				time += TimeDate.getExc(start, end);
@@ -397,7 +401,7 @@ public class ChatView<E> implements IView, INetLisener {
 		@Override
 		public void refreshList(String onlineList) {
 			try {
-				String JsonMap = AESUtil.decrypt(onlineList, userModel.getAesKey());
+				String JsonMap = encryptUtil.symmetricDecrypt(onlineList, userModel.getAesKey());
 				ArgumentMaker argumentMaker = new ArgumentMaker(JsonMap);
 				Map<String, String> onlineMap = argumentMaker.getMap();
 				userMap = onlineMap;

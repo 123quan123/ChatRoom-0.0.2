@@ -1,4 +1,4 @@
-package com.me.util;
+package com.me.encrpt;
 
 import javax.crypto.Cipher;
 import java.security.*;

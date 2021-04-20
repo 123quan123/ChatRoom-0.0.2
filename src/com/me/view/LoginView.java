@@ -2,6 +2,8 @@ package com.me.view;
 
 import com.me.CSFramework.core.Client;
 import com.me.CSFramework.core.ClientActionAdapter;
+import com.me.encrpt.EncryptUtil;
+import com.me.encrpt.IEncryptUtil;
 import com.me.model.UserModel;
 import com.me.util.*;
 
@@ -24,11 +26,13 @@ public class LoginView implements IView {
 	private JButton jbtnRegistry;
 
 	private LoginAction loginAction;
+	private IEncryptUtil encryptUtil;
 
 	public LoginView(Client client) {
 		this.client = client;
 		loginAction = new LoginAction();
 		this.client.setClientAction(loginAction);
+		encryptUtil = new EncryptUtil();
 		initView();
 	}
 
@@ -150,7 +154,8 @@ public class LoginView implements IView {
 					argumentMaker.addArg("com/me/model", userModel2);
 					String encrypt;
 					try {
-						encrypt = RSAUtil.puEncrypt(argumentMaker.toJson(), client.getUserModel().getServerPuk());
+						encrypt = encryptUtil.puEncrypt(argumentMaker.toJson(), client.getUserModel().getServerPuk());
+						System.out.println("serverpuk : ====== :  " +  client.getUserModel().getServerPuk());
 						client.loginIn(encrypt);
 					} catch (Exception e1) {
 						ViewTool.showMessage(jfrmLogin, "aes加密失败");
@@ -183,7 +188,11 @@ public class LoginView implements IView {
 	public void closeView() {
 		client.offline();
 	}
-	
+
+	public IEncryptUtil getEncryptUtil() {
+		return encryptUtil;
+	}
+
 	public class LoginAction extends ClientActionAdapter {
 		
 		public LoginAction() {
@@ -228,7 +237,9 @@ public class LoginView implements IView {
 		@Override
 		public void loginInSuccess(String mess) {
 			try {
-				String decrypt = AESUtil.decrypt(mess, client.getUserModel().getAesKey());
+				String decrypt = encryptUtil.symmetricDecrypt(mess, client.getUserModel().getAesKey());
+				System.out.println(decrypt);
+				System.out.println("tojson : " + decrypt);
 				ArgumentMaker argumentMaker = new ArgumentMaker(decrypt);
 				UserModel value = argumentMaker.getValue("com/me/model", UserModel.class);
 				client.getUserModel().setName(value.getName());
@@ -238,7 +249,7 @@ public class LoginView implements IView {
 			}
 			ViewTool.showMessage(jfrmLogin, "登录成功");
 			exitView();
-			new ChatView(client).showView();
+			new ChatView(client, encryptUtil).showView();
 		
 		}
 

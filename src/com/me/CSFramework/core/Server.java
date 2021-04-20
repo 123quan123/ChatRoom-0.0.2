@@ -2,11 +2,9 @@ package com.me.CSFramework.core;
 
 import com.me.model.UserModel;
 import com.me.service.IUserSvice;
-import com.me.service.UserService;
 import com.me.util.*;
 
 import java.io.IOException;
-import java.io.InputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.ArrayList;
@@ -88,11 +86,6 @@ public class Server implements Runnable, INetSpeaker {
 	public ServerArg getServerArg() {
 		return serverArg;
 	}
-
-	public void setServerArg(ServerArg serverArg) {
-		this.serverArg = serverArg;
-	}
-
 	public void shutdown() {
 		if (goon == false) {
 			speakOut("服务器未启动！");
@@ -142,7 +135,7 @@ public class Server implements Runnable, INetSpeaker {
 			}
 			ServerConversation conversation = conversationList.get(id);
 			try {
-				String encrypt = AESUtil.encrypt(message, aesKeyMap.get(id));
+				String encrypt = serverArg.getEncryptUtil().symmetricEncrypt(message, aesKeyMap.get(id));
 				conversation.toOther(resourceId, encrypt);
 			} catch (Exception e) {
 				e.printStackTrace();
@@ -191,7 +184,7 @@ public class Server implements Runnable, INetSpeaker {
 				if (conversation == null) continue;
 				String encrypt;
 				try {
-					encrypt = AESUtil.encrypt(argumentMaker.toJson(), aesKeyMap.get(id));
+					encrypt = serverArg.getEncryptUtil().symmetricEncrypt(argumentMaker.toJson(), aesKeyMap.get(id));
 					conversation.sendOnLineMap(encrypt);
 				} catch (Exception e) {
 					e.printStackTrace();
@@ -328,7 +321,7 @@ public class Server implements Runnable, INetSpeaker {
 				}
 				String ip;
 				// 应该用socket产生会话，即，ServerConversation对象！
-				ServerConversation conversation = new ServerConversation(socket);
+				ServerConversation conversation = new ServerConversation(socket, serverArg.getEncryptUtil());
 				if (conversationList.size() >= serverArg.getMaxClientCount()) {
 					conversation.send(new NetMessage()
 							.setCommand(ENetCommand.OUT_OF_ROOM));
@@ -343,7 +336,7 @@ public class Server implements Runnable, INetSpeaker {
 							.setCommand(ENetCommand.CONNECT_SUCCESS));
 					conversation.send(new NetMessage()
 							.setCommand(ENetCommand.SERVER_PUK)
-							.setPara(serverArg.getPublicKey()));
+							.setPara(serverArg.getEncryptUtil().getPublicKey()));
 					speakOut(TimeDate.getCurrentTime(TimeDate.DATE_TIME) 
 							+ "客户端[" + ip + "]连接成功！");
 				}

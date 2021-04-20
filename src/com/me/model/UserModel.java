@@ -165,7 +165,7 @@ public class UserModel implements Serializable, Cloneable {
 	@Override
 	public String toString() {
 		return "账号 : " + id  + "   " + "昵称 : " + name+ "   " + "性别 : " + sex + "   " + "年龄 : " + age+ "   " + "电话 : " + tel
-				+ "serverpuk : " + serverPuk + "   " + "aeskey : " + aesKey;
+				 + "   " + "aeskey : " + aesKey;
 	}
 
 }

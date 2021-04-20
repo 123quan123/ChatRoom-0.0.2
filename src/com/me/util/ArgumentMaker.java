@@ -3,6 +3,7 @@ package com.me.util;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
+import com.me.model.UserModel;
 
 import java.lang.reflect.Type;
 import java.util.HashMap;
@@ -58,5 +59,14 @@ public class ArgumentMaker {
 	
 	public String toJson() {
 		return gson.toJson(paraMap);
+	}
+
+	public static void main(String[] args) {
+		ArgumentMaker argumentMaker = new ArgumentMaker();
+		String s = argumentMaker.addArg("com/me/model", new UserModel("10001", 15, 1, "sxasx")).toJson();
+		ArgumentMaker argumentMaker1 = new ArgumentMaker(s);
+		UserModel value = argumentMaker1.getValue("com/me/model", UserModel.class);
+		System.out.println(value);
+		String client = "nPxc9FVfGrPosACjlj81knKKHETycHVzVVLIfn9s723FLzU/uXtz0uylJwzhVocy9lIMORYkx/lMG1rUmcOFfx3G3iz7azj5jGv8406TcUl0GmoypiY5t+iBS9+55BcxYOJ0pBwbsdVjDuQBXfr9FcrViaUr96K7og5E9Fv5nS3dLrd7gsdj4kIHPm8B96buaeRAQBt+//8II2FHvjcBBwKzbTMfiG5sfiZeaQxrAR8=";
 	}
 }
